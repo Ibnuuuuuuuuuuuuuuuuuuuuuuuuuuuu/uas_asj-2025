@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Menu Coffeeshop</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 20px;
+        background-color: #f4f4f4;
+        color: #333;
+      }
+      h1,
+      h2 {
+        color: #6f4e37;
+      } /* Coffee brown */
+      .container {
+        max-width: 900px;
+        margin: auto;
+        background: #fff;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      form {
+        margin-bottom: 30px;
+        padding: 20px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        background-color: #fcfcfc;
+      }
+      form label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+      }
+      form input[type="text"],
+      form input[type="number"],
+      form textarea,
+      form select {
+        width: calc(100% - 20px);
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-sizing: border-box; /* Include padding in width */
+      }
+      form button {
+        padding: 10px 20px;
+        background-color: #a0522d; /* Sienna brown */
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      form button:hover {
+        background-color: #8b4513;
+      } /* Darker sienna */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 12px;
+        text-align: left;
+      }
+      th {
+        background-color: #d2b48c;
+        color: #6f4e37;
+      } /* Tan/coffee color */
+      tr:nth-child(even) {
+        background-color: #f9f9f9;
+      }
+      .flash-message {
+        padding: 10px;
+        margin-bottom: 15px;
+        border-radius: 4px;
+        font-weight: bold;
+      }
+      .flash-message.success {
+        background-color: #d4edda;
+        color: #155724;
+        border-color: #c3e6cb;
+      }
+      .flash-message.danger {
+        background-color: #f8d7da;
+        color: #721c24;
+        border-color: #f5c6cb;
+      }
+      .action-buttons button,
+      .action-buttons a button {
+        padding: 8px 12px;
+        margin-right: 5px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 14px;
+      }
+      .action-buttons a button {
+        background-color: #007bff;
+        color: white;
+      }
+      .action-buttons a button:hover {
+        background-color: #0056b3;
+      }
+      .action-buttons form button {
+        background-color: #dc3545;
+        color: white;
+      }
+      .action-buttons form button:hover {
+        background-color: #c82333;
+      }
+      .delete-form {
+        display: inline;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Daftar Menu Coffeeshop</h1>
+
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %}
+      <ul class="flash-messages">
+        {% for category, message in messages %}
+        <li class="flash-message {{ category }}">{{ message }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %} {% endwith %}
+
+      <h2>Tambah Item Menu Baru</h2>
+      <form action="{{ url_for('add_item') }}" method="POST">
+        <label for="name">Nama Menu:</label>
+        <input type="text" id="name" name="name" required /><br />
+
+        <label for="description">Deskripsi:</label>
+        <textarea id="description" name="description" rows="3"></textarea><br />
+
+        <label for="price">Harga:</label>
+        <input
+          type="number"
+          id="price"
+          name="price"
+          step="0.01"
+          min="0"
+          required
+        /><br />
+
+        <label for="category">Kategori:</label>
+        <select id="category" name="category" required>
+          <option value="Coffee">Coffee</option>
+          <option value="Non-Coffee">Non-Coffee</option>
+          <option value="Food">Food</option>
+          <option value="Snack">Snack</option></select
+        ><br />
+
+        <button type="submit">Tambah Item</button>
+      </form>
+
+      <h2>Daftar Item Menu</h2>
+      {% if menu_items %}
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nama</th>
+            <th>Deskripsi</th>
+            <th>Harga</th>
+            <th>Kategori</th>
+            <th>Aksi</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in menu_items %}
+          <tr>
+            <td>{{ item.id }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.description }}</td>
+            <td>Rp {{ "%.2f" | format(item.price | float) }}</td>
+            <td>{{ item.category }}</td>
+            <td class="action-buttons">
+              <a href="{{ url_for('edit_item', id=item.id) }}"
+                ><button>Edit</button></a
+              >
+
+              <form
+                action="{{ url_for('delete_item', id=item.id) }}"
+                method="POST"
+                class="delete-form"
+                onsubmit="return confirm('Apakah Anda yakin ingin menghapus item ini?');"
+              >
+                <button type="submit">Hapus</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p>Belum ada item menu. Tambahkan yang pertama!</p>
+      {% endif %}
+    </div>
+  </body>
+</html>
