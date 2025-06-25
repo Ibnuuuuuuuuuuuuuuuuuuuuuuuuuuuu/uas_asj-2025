@@ -3,57 +3,68 @@ from flask_mysqldb import MySQL
 import MySQLdb.cursors
 import os
 from dotenv import load_dotenv
-import time # Import modul time untuk delay
+import time 
 
-load_dotenv() # Memuat variabel dari .env
+load_dotenv() 
 
 app = Flask(__name__)
 
-# Konfigurasi MySQL dari environment variables
 app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST')
 app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER')
 app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
 app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB')
-app.config['MYSQL_CURSORCLASS'] = 'DictCursor' # Mengembalikan hasil query dalam bentuk dictionary
+app.config['MYSQL_CURSORCLASS'] = 'DictCursor' 
 
 mysql = MySQL(app)
 
 app.secret_key = os.environ.get('FLASK_SECRET_KEY', 'default_secret_key_if_not_set')
 
-# --- Database Initialization (Untuk membuat tabel jika belum ada) ---
 def init_db():
     max_retries = 5
     retry_delay = 5 # seconds
     for i in range(max_retries):
         try:
-            with app.app_context(): # Pastikan ini dijalankan dalam konteks aplikasi Flask
+            with app.app_context(): 
                 cur = mysql.connection.cursor()
-                # Query sederhana untuk memastikan koneksi berhasil
                 cur.execute("SELECT 1")
                 cur.close()
             print("Database connection successful.")
-            break # Exit loop if successful
+            break 
         except Exception as e:
             print(f"Attempt {i+1} to connect to DB and create table failed: {e}")
             if i < max_retries - 1:
-                time.sleep(retry_delay) # Wait before retrying
+                time.sleep(retry_delay) 
             else:
                 print("Max retries reached. Could not connect to database.")
-                raise # Re-raise the last exception if all retries fail
+                raise 
 
-
-# --- ROUTES ---
 
 @app.route('/')
 def index():
     cur = mysql.connection.cursor()
-    cur.execute("SELECT * FROM menu_items ORDER BY id DESC")
-    menu_items = cur.fetchall()
+    cur.execute("SELECT * FROM menu_items ORDER BY category ASC, name ASC")
+    all_items = cur.fetchall()
     cur.close()
-    return render_template('index.html', menu_items=menu_items)
 
-@app.route('/add_item', methods=['POST']) # Pastikan nama rute dan metode benar
-def add_item(): # Pastikan nama fungsi sesuai dengan url_for
+    menu_by_category = {}
+    for item in all_items:
+        category = item['category']
+        if category not in menu_by_category:
+            menu_by_category[category] = []
+        menu_by_category[category].append(item)
+            
+    ordered_categories = ['Coffee', 'Non-Coffee', 'Food', 'Snack']
+    
+    sorted_categories = [cat for cat in ordered_categories if cat in menu_by_category]
+    for category in menu_by_category:
+        if category not in sorted_categories:
+            sorted_categories.append(category)
+
+
+    return render_template('index.html', menu_by_category=menu_by_category, sorted_categories=sorted_categories)
+
+@app.route('/add_item', methods=['POST']) 
+def add_item(): 
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
@@ -70,10 +81,10 @@ def add_item(): # Pastikan nama fungsi sesuai dengan url_for
             flash(f'Gagal menambahkan item menu: {e}', 'danger')
         finally:
             cur.close()
-        return redirect(url_for('index')) # url_for('index') sudah benar
+        return redirect(url_for('index'))
 
-@app.route('/edit_item/<int:id>') # Pastikan nama rute benar
-def edit_item(id): # Pastikan nama fungsi sesuai dengan url_for
+@app.route('/edit_item/<int:id>')
+def edit_item(id):
     cur = mysql.connection.cursor()
     cur.execute("SELECT * FROM menu_items WHERE id = %s", (id,))
     item = cur.fetchone()
@@ -83,8 +94,8 @@ def edit_item(id): # Pastikan nama fungsi sesuai dengan url_for
     flash('Item menu tidak ditemukan.', 'danger')
     return redirect(url_for('index'))
 
-@app.route('/update_item/<int:id>', methods=['POST']) # Pastikan nama rute dan metode benar
-def update_item(id): # Pastikan nama fungsi sesuai dengan url_for
+@app.route('/update_item/<int:id>', methods=['POST']) 
+def update_item(id): 
     if request.method == 'POST':
         name = request.form['name']
         description = request.form['description']
@@ -103,8 +114,8 @@ def update_item(id): # Pastikan nama fungsi sesuai dengan url_for
             cur.close()
         return redirect(url_for('index'))
 
-@app.route('/delete_item/<int:id>', methods=['POST']) # Pastikan nama rute dan metode benar
-def delete_item(id): # Pastikan nama fungsi sesuai dengan url_for
+@app.route('/delete_item/<int:id>', methods=['POST']) 
+def delete_item(id): 
     cur = mysql.connection.cursor()
     try:
         cur.execute("DELETE FROM menu_items WHERE id = %s", (id,))
@@ -116,11 +127,8 @@ def delete_item(id): # Pastikan nama fungsi sesuai dengan url_for
         cur.close()
     return redirect(url_for('index'))
 
-# --- MAIN RUN ---
 if __name__ == '__main__':
-    # Tambahkan delay singkat (misalnya 15 detik) untuk memberi waktu DB siap
-    # Anda bisa coba sesuaikan atau hapus jika merasa sudah tidak perlu setelah tabel dibuat
     print("Waiting for database to be fully ready (if it's the first time running this container)...")
-    time.sleep(15) # Penting untuk startup pertama kali
-    init_db() # Panggil fungsi ini saat aplikasi pertama kali dijalankan
+    time.sleep(15)
+    init_db() 
     app.run(debug=True, host='0.0.0.0', port=5000)

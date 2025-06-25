@@ -1,42 +1,37 @@
 version: "3.8"
 
 services:
-  # Layanan Aplikasi Flask (Web App)
   web:
-    # ... kode web service Anda yang sudah ada ...
-    build: . # Build image dari Dockerfile di direktori saat ini
+    build: .
     ports:
-      - "5000:5000" # Mapping port lokal ke port container
+      - "5000:5000"
     volumes:
-      - .:/app # Mount volume untuk hot reload (poin 6)
+      - .:/app
     env_file:
-      - ./.env # Memuat variabel lingkungan dari .env (poin 7)
+      - ./.env
     depends_on:
-      - db # Pastikan database service aktif sebelum web app
+      - db
     environment:
       FLASK_APP: ${FLASK_APP}
       FLASK_DEBUG: ${FLASK_DEBUG}
-      MYSQL_HOST: db # Menggunakan service name 'db' untuk koneksi (poin 5)
+      MYSQL_HOST: db
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DB: ${MYSQL_DB}
 
-  # Layanan Database MySQL (Database App)
   db:
-    image: mysql:8.0 # Menggunakan image MySQL resmi versi 8.0
+    image: mysql:8.0
     container_name: coffeeshop_db_container
     ports:
-      - "3306:3306" # Opsional: mapping port database ke lokal
+      - "3306:3306"
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DB}
       MYSQL_USER: ${MYSQL_USER}
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     volumes:
-      - db_data:/var/lib/mysql # Persistent volume untuk data database
-      # ---- START: TAMBAH BARIS INI ----
-      - ./mysql_init:/docker-entrypoint-initdb.d # Menjalankan skrip SQL saat container pertama kali start
-      # ---- END: TAMBAH BARIS INI ----
+      - db_data:/var/lib/mysql
+      - ./mysql_init:/docker-entrypoint-initdb.d
 
 volumes:
   db_data:

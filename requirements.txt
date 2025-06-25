@@ -1,4 +1,4 @@
-Flask==2.3.3 # Atau versi terbaru yang stabil
-Flask-MySQLdb==1.0.1 # Atau versi terbaru yang stabil
-python-dotenv==1.0.0 # Atau versi terbaru yang stabil
-mysqlclient==2.2.0 # Atau versi terbaru yang stabil, pastikan ini ada jika Flask-MySQLdb membutuhkannya
+Flask==2.3.3 
+Flask-MySQLdb==1.0.1 
+python-dotenv==1.0.0 
+mysqlclient==2.2.0 

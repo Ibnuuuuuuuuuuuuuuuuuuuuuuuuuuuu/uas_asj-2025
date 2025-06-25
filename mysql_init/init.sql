@@ -1,8 +1,6 @@
 ALTER USER 'flask_user'@'%' IDENTIFIED WITH mysql_native_password BY 'anis_banjarbaru_projek_uas_asj';
 FLUSH PRIVILEGES;
 
--- Tambahkan ini untuk membuat database jika belum ada (walaupun Docker sudah membuat)
--- Pastikan nama database sesuai dengan MYSQL_DB di .env Anda
 CREATE DATABASE IF NOT EXISTS coffeeshop_db;
 USE coffeeshop_db;
 
